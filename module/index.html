@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>原生API测试</title>
+  <script src="https://cdn.bootcdn.net/ajax/libs/rxjs/6.6.3/rxjs.umd.min.js"></script>
+
+  <style>
+    #plugin {
+      width: 100%;
+      height: 40px;
+      background-color: bisque;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    #plugin div {
+      /* background-color: cornflowerblue;
+      color: wheat; */
+      font-size: 20px;
+      margin: 10px;
+    }
+
+    #toggle {
+      cursor: pointer;
+    }
+
+    #viewwrap {
+      min-height: 100px;
+      max-height: 500px;
+      overflow: scroll;
+      width: 100%;
+      background-color: lightgoldenrodyellow;
+    }
+
+    #view {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    #panel {
+      width: 100%;
+      height: 300px;
+      display: flex;
+    }
+
+    #playground {
+      flex: 1;
+      overflow: scroll;
+      background-color: beige;
+      padding: 30px 30px 0 30px;
+      font-size: 16px;
+    }
+
+    #log {
+      width: 400px;
+      overflow: scroll;
+      background-color: azure;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="plugin">
+    <div id="toggle" title="点击关闭编辑">✍️</div>
+  </div>
+  <div id="viewwrap">
+    <div id="view"></div>
+  </div>
+  <div id="panel">
+    <div id="playground" contenteditable="true"></div>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    let rxjs = window.rxjs;
+    let operators = rxjs.operators;
+
+    let { fromEvent, merge } = rxjs;
+    let { filter } = operators;
+
+    let playground = document.querySelector('#playground');
+    let log = document.querySelector('#log');
+    let toggle = document.querySelector('#toggle');
+    let view = document.querySelector('#view')
+
+
+    // 响应式变更view
+    let observer = new MutationObserver((mut) => {
+
+      mut.forEach(item => {
+        if (item.target && item.target.querySelectorAll) {
+          let imgs = item.target.querySelectorAll('img');
+          if (imgs) {
+            imgs.forEach(img => {
+              img.style.maxWidth = '100%';
+            })
+          }
+        }
+
+        // 增加元素
+        if (item.addedNodes) {
+          item.addedNodes.forEach(node => {
+            if (node.tagName === 'BR') {
+              appendLog('[换行]')
+            } else if (node.tagName === 'IMG') {
+              appendLog('[插入图片]')
+            }
+          })
+        }
+        console.log('item >', item)
+      })
+
+      view.innerHTML = playground.innerHTML;
+
+      view.querySelectorAll('img').forEach(img => {
+        img.style.maxWidth = '100%';
+      })
+    })
+
+    observer.observe(playground, { childList: true, attributes: false, characterData: true, subtree: true })
+
+
+    // 粘贴
+    let paste$ = fromEvent(playground, 'paste');
+    paste$.subscribe(event => {
+      console.log('==>', event.clipboardData)
+    });
+
+    // 切换编辑模式和非编辑模式
+    let toggle$ = merge(
+      fromEvent(document, 'keyup'),
+      fromEvent(toggle, 'click')
+    ).pipe(
+      filter(event => event.key === 'j' && event.ctrlKey)
+    );
+    toggle$.subscribe(event => {
+      let editable = playground.getAttribute('contenteditable') === 'true' ? 'false' : 'true';
+      playground.setAttribute('contenteditable', editable);
+      toggle.setAttribute('title', editable === 'true' ? '点击关闭编辑' : '点击打开编辑');
+      toggle.innerHTML = editable === 'true' ? '✍️' : '👀';
+      appendLog(`[编辑器是否可编辑] ${editable}`)
+    })
+
+
+
+    /// 工具函数
+
+    /** 增加日志 */
+    function appendLog(...args) {
+      let p = document.createElement('p');
+      p.appendChild(getText(`${new Date().toLocaleString()} `))
+      args.forEach(text => {
+        p.appendChild(getText(text));
+        p.appendChild(getText(';'));
+      });
+
+      if (log.children.length) {
+        log.insertBefore(p, log.children[0]);
+      } else {
+        log.appendChild(p);
+      }
+    }
+
+
+    /** 文本元素 */
+    function getText(text) {
+      return document.createTextNode(text);
+    }
+
+  </script>
+</body>
+
+</html>
