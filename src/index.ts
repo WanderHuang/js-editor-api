@@ -1,5 +1,6 @@
 import { fromEvent, merge } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import Editor from './lib/Editor';
 import './index.less';
 
 let playground = document.querySelector("#playground");
@@ -7,54 +8,17 @@ let log = document.querySelector("#log");
 let toggle = document.querySelector("#toggle");
 let view = document.querySelector("#view");
 
-// 响应式变更view
-let observer = new MutationObserver((mut) => {
-  mut.forEach((item) => {
-    if (item.target && (item.target as any).querySelectorAll) {
-      let imgs = (item.target as any).querySelectorAll("img");
-      if (imgs) {
-        imgs.forEach((img: HTMLImageElement) => {
-          img.style.maxWidth = "100%";
-        });
-      }
-    }
-
-    // 增加元素
-    if (item.addedNodes) {
-      item.addedNodes.forEach((node: any) => {
-        if (node.tagName === "BR") {
-          appendLog("[换行]");
-        } else if (node.tagName === "IMG") {
-          appendLog("[插入图片]");
-        }
-      });
-    }
-    console.log("item >", item);
-  });
-
-  if (view) {
-    view.innerHTML = playground?.innerHTML || '';
-
-    view.querySelectorAll("img").forEach((img) => {
-      img.style.maxWidth = "100%";
-
-    });
-  }
-});
-
 if (playground) {
-  observer.observe(playground, {
-    childList: true,
-    attributes: false,
-    characterData: true,
-    subtree: true,
+  let editor = new Editor({ el: playground });
+  editor.on('enter', () => {
+    appendLog("[换行]");
   });
 
-  // 粘贴
-  let paste$ = fromEvent<ClipboardEvent>(playground, "paste");
-  paste$.subscribe((event) => {
-    console.log("==>", event.clipboardData);
-  });
+  editor.on('change', (_, el) => {
+    if (view) {
+      view.innerHTML = el.innerHTML;
+    }
+  })
 
   if (toggle) {
     // 切换编辑模式和非编辑模式
@@ -64,17 +28,15 @@ if (playground) {
     ).pipe(filter((event) => (event as KeyboardEvent).key === "j" && event.ctrlKey));
     toggle$.subscribe((event) => {
       if (playground) {
-
-        let editable =
-          playground.getAttribute("contenteditable") === "true" ? "false" : "true";
-        playground.setAttribute("contenteditable", editable);
+        let { active } = editor.getStatus();
+        editor.setActive(!active);
         if (toggle) {
           toggle.setAttribute(
             "title",
-            editable === "true" ? "点击关闭编辑" : "点击打开编辑"
+            active ? "点击关闭编辑" : "点击打开编辑"
           );
-          toggle.innerHTML = editable === "true" ? "✍️" : "👀";
-          appendLog(`[编辑器是否可编辑] ${editable}`);
+          toggle.innerHTML = active ? "✍️" : "👀";
+          appendLog(`[编辑器是否可编辑] ${active}`);
         }
       }
     });

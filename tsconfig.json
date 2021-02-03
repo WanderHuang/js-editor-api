@@ -69,6 +69,7 @@
   },
   "include": [
     "types.d.ts",
-    "src"
+    "src",
+    "Editor.d.ts",
   ]
 }
