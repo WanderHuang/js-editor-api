@@ -18,6 +18,19 @@ const logger = {
       ),
       ...args
     );
+
+    if (process.env.NODE_ENV === "development") {
+      if (persent === 1) {
+        setTimeout(() => {
+          console.log(
+            chalk.cyan("[ editor ] :) Thank you for using me!")
+          );
+          console.log(
+            chalk.cyan("[ server ] Running on http://localhost:3000")
+          );
+        }, 100);
+      }
+    }
   },
 };
 

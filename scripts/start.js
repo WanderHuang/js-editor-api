@@ -12,6 +12,8 @@ const options = Object.assign({}, config.devServer, {
 
 const server = new Server(compiler, options);
 
-server.listen(3000, "127.0.0.1", () => {
-  console.log('Starting server on http://localhost:3000');
+server.listen(3000, "127.0.0.1", (err) => {
+  if (err) {
+    logger.error(err);
+  }
 });

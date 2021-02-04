@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const RxjsExternals = require("webpack-rxjs-externals");
 const webpack = require("webpack");
 const path = require("path");
 const logger = require("./logger");
@@ -12,7 +13,7 @@ const env = process.env.NODE_ENV;
 module.exports = {
   entry: path.resolve(cwd, "src", "index.ts"),
   mode: env,
-  devtool: env === 'development' ? 'source-map' : false,
+  devtool: env === "development" ? "source-map" : false,
   output: {
     path: path.resolve(cwd, "dist"),
     filename: "index.[contenthash:8].js",
@@ -22,7 +23,7 @@ module.exports = {
     new MiniCssExtractPlugin(),
     new HtmlWebpackPlugin({
       title: "在线编辑器",
-      template: path.resolve(cwd, 'template', 'index.html')
+      template: path.resolve(cwd, "template", "index.html"),
     }),
     new webpack.ProgressPlugin({
       activeModules: false,
@@ -87,26 +88,24 @@ module.exports = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js", ".less"],
-    modules: ['node_modules', path.resolve(cwd, 'src')],
+    modules: ["node_modules", path.resolve(cwd, "src")],
     alias: {
-      '@': path.resolve(cwd, 'src')
-    }
+      "@": path.resolve(cwd, "src"),
+    },
   },
-  target: 'web',
+  target: "web",
   stats: false,
   // watch: true,
   performance: false,
+  externals: [RxjsExternals()],
   devServer: {
-    contentBase: path.join(cwd, 'dist'),
+    contentBase: path.join(cwd, "dist"),
     compress: true,
     watchContentBase: true,
     hot: true,
     inline: true,
-    open: true,
-    // watchOptions: {
-    //   poll: true,
-    //   aggregateTimeout: 600
-    // },
+    stats: 'errors-only',
     historyApiFallback: true,
-  }
+    quiet: true,
+  },
 };
