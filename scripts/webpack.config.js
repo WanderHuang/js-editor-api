@@ -1,7 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const RxjsExternals = require("webpack-rxjs-externals");
 const webpack = require("webpack");
 const path = require("path");
 const logger = require("./logger");
@@ -97,7 +96,9 @@ module.exports = {
   stats: false,
   // watch: true,
   performance: false,
-  externals: [RxjsExternals()],
+  externals: {
+    rxjs: 'rxjs'
+  },
   devServer: {
     contentBase: path.join(cwd, "dist"),
     compress: true,
